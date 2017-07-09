@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:int="http://www.springframework.org/schema/integration"
+       xmlns:int-file="http://www.springframework.org/schema/integration/file"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+			http://www.springframework.org/schema/beans/spring-beans.xsd
+			http://www.springframework.org/schema/integration
+			http://www.springframework.org/schema/integration/spring-integration.xsd
+			http://www.springframework.org/schema/integration/file
+			http://www.springframework.org/schema/integration/file/spring-integration-file.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+
+    <context:component-scan base-package="com.prits.file" />
+
+    <int-file:inbound-channel-adapter directory="/Users/priteshpatel/Downloads/file_test"
+                                      channel="fileInChannel"
+                                      filename-pattern="*.txt"
+                                      comparator="customFileComparator"
+                                      id="filePoller">
+
+        <int:poller fixed-delay="1000"></int:poller>
+
+    </int-file:inbound-channel-adapter>
+
+    <int:poller fixed-delay="1000" default="true"></int:poller>
+    <int:channel id="fileInChannel">
+        <int:interceptors>
+            <int:wire-tap channel="nullChannel"/>
+        </int:interceptors>
+    </int:channel>
+
+    <int:logging-channel-adapter channel="nullChannel" auto-startup="true" level="INFO"/>
+
+    <int:service-activator input-channel="fileInChannel"
+                                   output-channel="fileOutChannel"
+                                   ref="handler"/>
+
+    <int:channel id="fileOutChannel"></int:channel>
+
+    <int-file:outbound-channel-adapter id="fileCopier" channel="fileOutChannel" directory="/Users/priteshpatel/Downloads/file_out"></int-file:outbound-channel-adapter>
+
+    <bean id="handler" class="com.prits.file.comparator.Handler"/>
+</beans>
